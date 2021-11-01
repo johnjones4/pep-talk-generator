@@ -17,6 +17,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -109,6 +111,13 @@ var parts = [][]string{
 		"according to CNN.",
 		"so get used to it.",
 	},
+}
+
+var quoteModifiers = []string{
+	"probably",
+	"maybe",
+	"most likely",
+	"perhaps",
 }
 
 var (
@@ -211,7 +220,8 @@ func uploadImage(img image.Image) (string, error) {
 
 func tweetMeme(text string, mediaId string) error {
 	var v url.Values = make(map[string][]string)
-	v.Add("status", fmt.Sprintf("\"%s\"\n - Coach Lasso (probably)", text))
+	modifier := quoteModifiers[rand.Intn(len(quoteModifiers))]
+	v.Add("status", fmt.Sprintf("\"%s\"\n - Coach Lasso (%s)", text, modifier))
 	v.Add("media_ids", mediaId)
 	req, err := http.NewRequest("POST", "https://api.twitter.com/1.1/statuses/update.json?"+v.Encode(), nil)
 	if err != nil {
@@ -240,7 +250,7 @@ func tweetMeme(text string, mediaId string) error {
 	return nil
 }
 
-func main() {
+func handler(ctx context.Context, event events.CloudWatchEvent) {
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
 		panic(err)
@@ -266,4 +276,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func main() {
+	lambda.Start(handler)
 }

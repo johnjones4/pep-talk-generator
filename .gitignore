@@ -2,5 +2,5 @@
 *.ttf
 peptalk
 .serverless
-*.yml
+priv.yml
 .DS_Store

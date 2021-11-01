@@ -1,0 +1,50 @@
+service: peptalkbot
+
+provider:
+  name: aws
+  runtime: go1.x
+
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+       - "s3:GetObject"
+      Resource:
+        Fn::Join:
+          - ""
+          - - "arn:aws:s3:::"
+            - ${self:custom.sourceImagesBucketName}
+            - "/*"
+
+custom:
+  sourceImagesBucketName: peptalkbotsourceimages
+
+package:
+  individually: true
+  exclude:
+    - ./**/*.go
+    - ./go.*
+    - ./**/*.jpg
+    - ./Makefile
+    - ./**/*.yml
+
+functions:
+  generate:
+    handler: peptalk
+    package:
+      include:
+        - ./peptalk
+    events:
+      - schedule: rate(1 hour)
+    environment:
+      SOURCE_IMAGES_BUCKET: ${self:custom.sourceImagesBucketName}
+      TWITTER_ACCESS_TOKEN: ${file(./priv.yml):TWITTER_ACCESS_TOKEN}
+      TWITTER_ACCESS_TOKEN_SECRET: ${file(./priv.yml):TWITTER_ACCESS_TOKEN_SECRET}
+      TWITTER_CONSUMER_SECRET: ${file(./priv.yml):TWITTER_CONSUMER_SECRET}
+      TWITTER_CONSUMER_KEY: ${file(./priv.yml):TWITTER_CONSUMER_KEY}
+
+resources:
+  Resources:
+    SourceBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.sourceImagesBucketName}
