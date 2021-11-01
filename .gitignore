@@ -1,0 +1,6 @@
+*.jpg
+*.ttf
+peptalk
+.serverless
+*.yml
+.DS_Store
